@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
-import os.path
 import pandas as pd
 from sqlalchemy import create_engine
 import urllib
 import datetime
 import shutil
-import numpy as np
 import glob
 
 # Paths for files and archive
@@ -26,7 +25,6 @@ Engine = create_engine('mssql+pyodbc:///?odbc_connect=%s' % Params)
 Timestamp = datetime.datetime.now()
 Script_name = 'DSV invoices.py'
 I = 0
-Files_count = len(Path_Glob)
 Files_error = []
 
 Cols_int = ['Invoice date','Delivery_Date','Pickup_Date','Account_Code']
@@ -38,26 +36,54 @@ Cols_string = ['Filename','Invoice no','Customer','Marks','Collitype','Content',
                ,'Consignee_Country','Consignee_Postcode','Equipment1','Equipment2','Equipment_Type','Text','Currency'
                ,'Calculation and texts','Sub Customer']
 
+def concatenate_list_data(list):
+    result= ''
+    for element in list:
+        result += '\n' + str(element)
+    return result
 
+# Read each .csv file in folder
 for File_name in Files_in_path:
     try:
-        Df_file = pd.read_csv(File_name ,header=0 ,sep=';' ,thousands=',')
-        Df_file.loc[: ,'Filename'] = File_name.replace(Path_source ,'' ,1)
-        
+        File_name_clean = File_name.replace(Path_source ,'' ,1)
+        Df_file = pd.read_csv(File_name ,encoding='iso8859_10' ,header=0 ,sep=';' ,thousands=',')
+        Df_file.loc[: ,'Filename'] = File_name_clean
+# Convert string and numeric datatypes
         Df_file[Cols_string] = Df_file[Cols_string].astype(str)
         Df_file[Cols_dec] = Df_file[Cols_dec].apply(pd.to_numeric)
-        
+# Fill int NA with placeholder and convert til int        
         Df_file[Cols_int] = Df_file[Cols_int].fillna(99999999)
         Df_file[Cols_int] = Df_file[Cols_int].astype(int)
-    
-        Df_file = Df_file.replace({'nan':None ,'NONE':None ,'NaN':None ,99999999:None}) # Convert text NULL values to actual NULL values
-        
+# Ensure all NULL values are actual NULL values before insert
+        Df_file = Df_file.replace({'nan':None ,'NONE':None ,'NaN':None ,99999999:None})
+# Insert data into SQL table        
+        Df_file.to_sql('DSV_fakturaspecifikationer' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
+# Move file to archive folder
+        shutil.move(File_name ,Path_archive + File_name_clean)
+# Count number of files successfully read into SQL
         I += 1
     except:
+# add file that failed to run to list
         Files_error.append(File_name)
         pass
 
-    Df_file.to_sql('DSV_fakturaspecifikationer' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False) #Insert file into SQL
+# Log inserts for succes and errors
+# Log success
+df_log_suc = pd.DataFrame(data= {'Event': Script_name ,'Note': str(I) + ' fil(er) indlæst' } , index=[0] )
 
-print(I)
-print(Files_error)
+if I > 0:
+    df_log_suc.to_sql('Log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
+# Log errors and insert into email_log
+df_log_err = pd.DataFrame(data= {'Event': Script_name ,'Note': str(len(Files_error)) + ' fil(er) fejlet ved indlæsning' } , index=[0] )
+df_email_err = pd.DataFrame(data= {'Email_til': 'nmo@bki.dk' ,'Email_emne': 'Indlæsning af DSV fakturaspecifikationer fejlet'
+     ,'Email_tekst':'Indlæsning af ' + str(len(Files_error)) + ' fakturaspecifikationer er fejlet \n'
+     + 'Følgende filer er ikke blevet indlæst: \n'
+     + concatenate_list_data(Files_error)} ,index=[0])
+    
+
+
+if len(Files_error) > 0:
+    df_log_err.to_sql('Log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
+    df_email_err.to_sql('Email_log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
+    
+
