@@ -10,9 +10,10 @@ import numpy as np
 import glob
 
 # Paths for files and archive
-Path_source = r'\\filsrv01\bki\11. Økonomi\04 - Controlling\NMO\3. Logistik\DSV fakturaspecifikationer\*.csv'
+Path_source = r'\\filsrv01\bki\11. Økonomi\04 - Controlling\NMO\3. Logistik\DSV fakturaspecifikationer'
+Path_Glob = Path_source + '\*.csv'
 Path_archive = r'\\filsrv01\bki\11. Økonomi\04 - Controlling\NMO\3. Logistik\DSV fakturaspecifikationer\Arkiv'
-Files_in_path = glob.glob(Path_source)
+Files_in_path = glob.glob(Path_Glob)
 
 # SQL Server data for destination of specifications
 Server = 'sqlsrv04'
@@ -26,6 +27,10 @@ Timestamp = datetime.datetime.now()
 Script_name = 'DSV invoices.py'
 
 
+for File_name in Files_in_path:
+    print(File_name) # Sti til fil inkl. selve filen
+    print(File_name.replace(Path_source ,'' ,1)) # Det reelle filnavn
 
-print(Files_in_path)
-print(len(Files_in_path))
+    Df_file = pd.read_csv(File_name ,header=0 ,sep=';').to_dict()
+    
+    print(Df_file)
