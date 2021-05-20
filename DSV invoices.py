@@ -64,7 +64,7 @@ for File_name in Files_in_path:
         I += 1
     except:
 # add file that failed to run to list
-        Files_error.append(File_name)
+        Files_error.append(File_name_clean)
         pass
 
 # Log inserts for succes and errors
@@ -76,8 +76,8 @@ if I > 0:
 # Log errors and insert into email_log
 df_log_err = pd.DataFrame(data= {'Event': Script_name ,'Note': str(len(Files_error)) + ' fil(er) fejlet ved indlæsning' } , index=[0] )
 df_email_err = pd.DataFrame(data= {'Email_til': 'nmo@bki.dk' ,'Email_emne': 'Indlæsning af DSV fakturaspecifikationer fejlet'
-     ,'Email_tekst':'Indlæsning af ' + str(len(Files_error)) + ' fakturaspecifikationer er fejlet \n'
-     + 'Følgende filer er ikke blevet indlæst: \n'
+     ,'Email_tekst':'Indlæsning af ' + str(len(Files_error)) + ' fakturaspecifikation(er) er fejlet \n'
+     + 'Følgende fil(er) er ikke blevet indlæst: \n'
      + concatenate_list_data(Files_error)} ,index=[0])
     
 
