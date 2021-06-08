@@ -51,6 +51,7 @@ for File_name in Files_in_path:
 # Convert string and numeric datatypes
         Df_file[Cols_string] = Df_file[Cols_string].astype(str)
         Df_file[Cols_dec] = Df_file[Cols_dec].apply(pd.to_numeric)
+        Df_file['Amount'] = Df_file['Amount'].div(100)
 # Fill int NA with placeholder and convert til int        
         Df_file[Cols_int] = Df_file[Cols_int].fillna(99999999)
         Df_file[Cols_int] = Df_file[Cols_int].astype(int)
