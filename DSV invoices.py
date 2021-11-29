@@ -48,25 +48,24 @@ for File_name in Files_in_path:
         File_name_clean = File_name.replace(Path_source ,'' ,1)
         Df_file = pd.read_csv(File_name ,encoding='iso8859_10' ,header=0 ,sep=';' ,thousands=',')
         Df_file.loc[: ,'Filename'] = File_name_clean
-# Convert string and numeric datatypes
+        # Convert string and numeric datatypes
         Df_file[Cols_string] = Df_file[Cols_string].astype(str)
         Df_file[Cols_dec] = Df_file[Cols_dec].apply(pd.to_numeric)
         Df_file['Amount'] = Df_file['Amount'].div(100)
-# Fill int NA with placeholder and convert til int        
+        # Fill int NA with placeholder and convert til int        
         Df_file[Cols_int] = Df_file[Cols_int].fillna(99999999)
         Df_file[Cols_int] = Df_file[Cols_int].astype(int)
-# Ensure all NULL values are actual NULL values before insert
+        # Ensure all NULL values are actual NULL values before insert
         Df_file = Df_file.replace({'nan':None ,'NONE':None ,'NaN':None ,99999999:None})
-# Insert data into SQL table        
+        # Insert data into SQL table        
         Df_file.to_sql('DSV_fakturaspecifikationer' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
-# Move file to archive folder
+        # Move file to archive folder
         shutil.move(File_name ,Path_archive + File_name_clean)
-# Count number of files successfully read into SQL
+        # Count number of files successfully read into SQL
         I += 1
     except:
-# add file that failed to run to list
+        # add file that failed to run to list
         Files_error.append(File_name_clean)
-        pass
 
 # Log inserts for succes and errors
 # Log success
