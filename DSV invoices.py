@@ -9,9 +9,9 @@ import shutil
 import glob
 
 # Paths for files and archive
-Path_source = r'\\filsrv01\bki\11. Økonomi\04 - Controlling\NMO\3. Logistik\DSV fakturaspecifikationer'
+Path_source = r'\\appsrv07\Python filer\DSV fakturaspecifikationer'
 Path_Glob = Path_source + '\*.csv'
-Path_archive = r'\\filsrv01\bki\11. Økonomi\04 - Controlling\NMO\3. Logistik\DSV fakturaspecifikationer\Arkiv'
+Path_archive = r'\\appsrv07\Python filer\DSV fakturaspecifikationer'
 Files_in_path = glob.glob(Path_Glob)
 
 # SQL Server data for destination of specifications
