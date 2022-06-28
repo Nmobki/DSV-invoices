@@ -63,9 +63,10 @@ for File_name in Files_in_path:
         shutil.move(File_name ,Path_archive + File_name_clean)
         # Count number of files successfully read into SQL
         I += 1
-    except:
+    except Exception as e:
         # add file that failed to run to list
         Files_error.append(File_name_clean)
+        error_code = e
 
 # Log inserts for succes and errors
 # Log success
@@ -73,16 +74,15 @@ df_log_suc = pd.DataFrame(data= {'Event': Script_name ,'Note': str(I) + ' fil(er
 
 if I > 0:
     df_log_suc.to_sql('Log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
-# Log errors and insert into email_log
-df_log_err = pd.DataFrame(data= {'Event': Script_name ,'Note': str(len(Files_error)) + ' fil(er) fejlet ved indlæsning' } , index=[0] )
-df_email_err = pd.DataFrame(data= {'Email_til': 'nmo@bki.dk' ,'Email_emne': 'Indlæsning af DSV fakturaspecifikationer fejlet'
-     ,'Email_tekst':'Indlæsning af ' + str(len(Files_error)) + ' fakturaspecifikation(er) er fejlet \n'
-     + 'Følgende fil(er) er ikke blevet indlæst: \n'
-     + concatenate_list_data(Files_error)} ,index=[0])
-    
-
+ 
 
 if len(Files_error) > 0:
+    # Log errors and insert into email_log
+    df_log_err = pd.DataFrame(data= {'Event': Script_name ,'Note': str(len(Files_error)) + " fil(er) fejlet ved indlæsning \n  Fejl: {error_code}" } , index=[0] )
+    df_email_err = pd.DataFrame(data= {'Email_til': 'nmo@bki.dk' ,'Email_emne': 'Indlæsning af DSV fakturaspecifikationer fejlet'
+         ,'Email_tekst':'Indlæsning af ' + str(len(Files_error)) + ' fakturaspecifikation(er) er fejlet \n'
+         + 'Følgende fil(er) er ikke blevet indlæst: \n'
+         + concatenate_list_data(Files_error)} ,index=[0])
     df_log_err.to_sql('Log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
     df_email_err.to_sql('Email_log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
     
