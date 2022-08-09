@@ -15,11 +15,11 @@ Path_archive = r'\\appsrv07\Python filer\DSV fakturaspecifikationer\Arkiv'
 Files_in_path = glob.glob(Path_Glob)
 
 # SQL Server data for destination of specifications
-Server = 'sqlsrv04'
-Db = 'BKI_Datastore'
 Schema = 'dbo'
-Params = urllib.parse.quote_plus('DRIVER={SQL Server Native Client 11.0};SERVER=' + Server +';DATABASE=' + Db +';Trusted_Connection=yes')
-Engine = create_engine('mssql+pyodbc:///?odbc_connect=%s' % Params)
+server_04 = "sqlsrv04"
+db_ds = "BKI_Datastore"
+params_ds = f"DRIVER={{SQL Server Native Client 11.0}};SERVER={server_04};DATABASE={db_ds};trusted_connection=yes"
+con_ds = create_engine('mssql+pyodbc:///?odbc_connect=%s' % urllib.parse.quote_plus(params_ds))
 
 # Other variables
 Timestamp = datetime.datetime.now()
@@ -58,7 +58,7 @@ for File_name in Files_in_path:
         # Ensure all NULL values are actual NULL values before insert
         Df_file = Df_file.replace({'nan':None ,'NONE':None ,'NaN':None ,99999999:None})
         # Insert data into SQL table        
-        Df_file.to_sql('DSV_fakturaspecifikationer' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
+        Df_file.to_sql('DSV_fakturaspecifikationer' ,con=con_ds ,schema=Schema ,if_exists='append' ,index=False)
         # Move file to archive folder
         shutil.move(File_name ,Path_archive + File_name_clean)
         # Count number of files successfully read into SQL
@@ -73,7 +73,7 @@ for File_name in Files_in_path:
 df_log_suc = pd.DataFrame(data= {'Event': Script_name ,'Note': str(I) + ' fil(er) indlæst' } , index=[0] )
 
 if I > 0:
-    df_log_suc.to_sql('Log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
+    df_log_suc.to_sql('Log' ,con=con_ds ,schema=Schema ,if_exists='append' ,index=False)
  
 
 if len(Files_error) > 0:
@@ -83,7 +83,7 @@ if len(Files_error) > 0:
          ,'Email_tekst':'Indlæsning af ' + str(len(Files_error)) + ' fakturaspecifikation(er) er fejlet \n'
          + 'Følgende fil(er) er ikke blevet indlæst: \n'
          + concatenate_list_data(Files_error)} ,index=[0])
-    df_log_err.to_sql('Log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
-    df_email_err.to_sql('Email_log' ,con=Engine ,schema=Schema ,if_exists='append' ,index=False)
+    df_log_err.to_sql('Log' ,con=con_ds ,schema=Schema ,if_exists='append' ,index=False)
+    df_email_err.to_sql('Email_log' ,con=con_ds ,schema=Schema ,if_exists='append' ,index=False)
     
 
